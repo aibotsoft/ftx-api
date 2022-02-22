@@ -16,10 +16,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	ErrorRateLimit  = errors.New("error rate limit")
-	RestAPIEndpoint = "https://ftx.com/api"
+const (
+	DefaultRestAPIEndpoint = "https://ftx.com/api"
 )
+
+var ErrorRateLimit = errors.New("error rate limit")
 
 type Client struct {
 	l          *zap.SugaredLogger
@@ -29,15 +30,39 @@ type Client struct {
 	httpClient *http.Client
 	subAccount *string
 }
+type Config struct {
+	ApiKey          string
+	ApiSecret       string
+	RestAPIEndpoint string
+	Logger          *zap.SugaredLogger
+	HttpClient      *http.Client
+	SubAccount      *string
+}
 
-func NewClient(apiKey, apiSecret, baseURL string, l *zap.SugaredLogger) *Client {
-	return &Client{
-		l:          l,
-		apiKey:     apiKey,
-		apiSecret:  apiSecret,
-		httpClient: http.DefaultClient,
-		baseURL:    baseURL,
+//func NewClient(apiKey, apiSecret, baseURL string, l *zap.SugaredLogger) *Client {
+
+func NewClient(cfg Config) *Client {
+	client := &Client{
+		l:          cfg.Logger,
+		apiKey:     cfg.ApiKey,
+		apiSecret:  cfg.ApiSecret,
+		baseURL:    DefaultRestAPIEndpoint,
+		subAccount: cfg.SubAccount,
 	}
+	if cfg.HttpClient == nil {
+		t := http.DefaultTransport.(*http.Transport).Clone()
+		t.MaxIdleConns = 10
+		t.MaxConnsPerHost = 10
+		t.MaxIdleConnsPerHost = 10
+		t.IdleConnTimeout = 0
+		client.httpClient = &http.Client{Timeout: 10 * time.Second, Transport: t}
+	} else {
+		client.httpClient = cfg.HttpClient
+	}
+	if cfg.RestAPIEndpoint != "" {
+		client.baseURL = cfg.RestAPIEndpoint
+	}
+	return client
 }
 
 func (c *Client) SubAccount(subaccount *string) *Client {

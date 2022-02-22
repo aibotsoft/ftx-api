@@ -23,6 +23,7 @@ type PlaceOrderParams struct {
 	PostOnly          *bool     `json:"postOnly,omitempty"`
 	ClientID          *string   `json:"clientId,omitempty"`
 	RejectOnPriceBand *bool     `json:"rejectOnPriceBand,omitempty"`
+	RejectAfterTs     *int64    `json:"rejectAfterTs,omitempty"`
 }
 
 func (s *PlaceOrderService) Params(params PlaceOrderParams) *PlaceOrderService {
@@ -46,6 +47,7 @@ func (s *PlaceOrderService) Do(ctx context.Context) (*Order, error) {
 	if err != nil {
 		return nil, err
 	}
+	//fmt.Println(string(byteData))
 	var result PlaceOrderResponse
 	if err := json.Unmarshal(byteData, &result); err != nil {
 		return nil, err
