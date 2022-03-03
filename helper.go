@@ -36,6 +36,9 @@ func StringPointer(s string) *string {
 func Int64Pointer(i int64) *int64 {
 	return &i
 }
+func BoolPointer(i bool) *bool {
+	return &i
+}
 
 func endPointWithFormat(template string, params ...interface{}) string {
 	return fmt.Sprintf(template, params...)
