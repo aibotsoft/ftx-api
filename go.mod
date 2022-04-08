@@ -1,6 +1,6 @@
 module github.com/aibotsoft/ftx-api
 
-go 1.17
+go 1.18
 
 require (
 	github.com/bitly/go-simplejson v0.5.0
@@ -11,5 +11,5 @@ require (
 require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.7.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
 )
