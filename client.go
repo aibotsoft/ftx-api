@@ -20,8 +20,6 @@ const (
 	DefaultRestAPIEndpoint = "https://ftx.com/api"
 )
 
-var ErrorRateLimit = errors.New("error rate limit")
-
 type Client struct {
 	l          *zap.SugaredLogger
 	apiKey     string
@@ -70,6 +68,10 @@ func (c *Client) SubAccount(subaccount *string) *Client {
 	return c
 }
 
+var ErrorRateLimit = errors.New("error_rate_limit")
+var OrderAlreadyClosed = errors.New("order_already_closed")
+var OrderAlreadyQueued = errors.New("order_already_queued_for_cancellation")
+
 func (c *Client) callAPI(ctx context.Context, r *request) ([]byte, error) {
 	req, err := c.parsedequest(ctx, r)
 	if err != nil {
@@ -79,27 +81,35 @@ func (c *Client) callAPI(ctx context.Context, r *request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	respBody, err := ioutil.ReadAll(resp.Body)
-	_ = resp.Body.Close()
-	if err != nil {
-		return nil, errors.New("failed to read body")
-	}
-	if r.httpMethod != http.MethodGet {
-		var rawData interface{}
-		_ = json.Unmarshal(respBody, &rawData)
-		c.l.Debugw("data response", "data", rawData)
-	}
+	defer resp.Body.Close()
 	if resp.StatusCode == 429 {
 		return nil, ErrorRateLimit
 	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.New("failed to read body")
+	}
+	//if r.httpMethod != http.MethodGet {
+	//	var rawData interface{}
+	//	_ = json.Unmarshal(respBody, &rawData)
+	//	c.l.Debugw("data response", "data", rawData)
+	//}
+
 	if resp.StatusCode != http.StatusOK {
 		var respData basicResponse
-		if errU := json.Unmarshal(respBody, &respData); errU != nil {
-			c.l.Errorw("cannot unmarshal response data", "err", err)
-		} else {
-			return nil, fmt.Errorf("unexpected status code = %d, error = %s", resp.StatusCode, respData.Error)
+		err := json.Unmarshal(respBody, &respData)
+		if err != nil {
+			return nil, fmt.Errorf("unexpected status code = %d", resp.StatusCode)
 		}
-		return nil, fmt.Errorf("unexpected status code = %d", resp.StatusCode)
+		switch respData.Error {
+		case "Order already closed":
+			return nil, OrderAlreadyClosed
+		case "Order already queued for cancellation":
+			return nil, OrderAlreadyQueued
+
+		}
+		return nil, fmt.Errorf("unexpected status code = %d, error = %s", resp.StatusCode, respData.Error)
 	}
 	return respBody, nil
 }

@@ -13,17 +13,23 @@ type PlaceOrderService struct {
 }
 
 type PlaceOrderParams struct {
-	Market            string    `json:"market"`
-	Side              Side      `json:"side"`
-	Price             float64   `json:"price"`
-	Type              OrderType `json:"type"`
-	Size              float64   `json:"size"`
-	ReduceOnly        *bool     `json:"reduceOnly,omitempty"`
-	Ioc               *bool     `json:"ioc,omitempty"`
-	PostOnly          *bool     `json:"postOnly,omitempty"`
-	ClientID          *string   `json:"clientId,omitempty"`
-	RejectOnPriceBand *bool     `json:"rejectOnPriceBand,omitempty"`
-	RejectAfterTs     *int64    `json:"rejectAfterTs,omitempty"`
+	Market string    `json:"market"`
+	Side   Side      `json:"side"`
+	Price  float64   `json:"price"`
+	Type   OrderType `json:"type"`
+	Size   float64   `json:"size"`
+	//https://help.ftx.com/hc/en-us/articles/360030802012
+	//Reduce-only orders will only reduce your overall position. They will never increase your position size or open a position in the opposite direction
+	ReduceOnly *bool `json:"reduceOnly,omitempty"`
+	//Immediate or cancel orders are guaranteed to be the taker order when executed. If you send an IOC order that does not immediately trade, it will be cancelled
+	Ioc *bool `json:"ioc,omitempty"`
+	//Post only orders are guaranteed to be the maker order when executed. If a post only order would instead cross the book and take, it will be cancelled
+	PostOnly *bool `json:"postOnly,omitempty"`
+	//client order id
+	ClientID *string `json:"clientId,omitempty"`
+
+	RejectOnPriceBand *bool  `json:"rejectOnPriceBand,omitempty"`
+	RejectAfterTs     *int64 `json:"rejectAfterTs,omitempty"`
 }
 
 func (s *PlaceOrderService) Params(params PlaceOrderParams) *PlaceOrderService {
